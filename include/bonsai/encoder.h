@@ -738,8 +738,7 @@ public:
             for(i = nf = 0; nf < k_ && i < l; ++i) {
                 if((v1 = cstr_lut[s[i]]) == uint8_t(-1)) {
                     fixup_minimizer:
-                    if(i + 2 * k_ >= l) goto end;
-                    i += k_;
+                    // Start a new k-mer after the invalid character.
                     nf = 0;
                     hasher_.reset();
                     rchasher_.reset();
@@ -765,8 +764,7 @@ public:
             for(i = nf = 0; nf < k_ && i < l; ++i) {
                 if((v1 = cstr_lut[s[i]]) == uint8_t(-1)) {
                     fixup:
-                    if(i + 2 * k_ >= l) return;
-                    i += k_;
+                    // Start a new k-mer after the invalid character.
                     nf = 0;
                     hasher_.reset();
                     rchasher_.reset();
@@ -808,7 +806,7 @@ public:
             if(unlikely((v1 = lutptr[s[i]]) == int8_t(-1))) {
                 //std::fprintf(stderr, "Char %c/%d was missing... %d\n", s[i], s[i], lutptr[s[i]]);
                 fixup:
-                i += k_; nf = 0; hasher_.reset();
+                nf = 0; hasher_.reset();
             } else hasher_.eat(v1), ++nf;
         }
         if(nf < k_) return; // All failed
