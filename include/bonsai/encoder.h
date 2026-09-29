@@ -274,7 +274,7 @@ public:
         min = filled = 0;
         while(likely(pos_ < l_)) {
             while(filled < sp_.k_ && likely(pos_ < l_)) {
-                const char c_at_pos = s_[pos_];
+                const uint8_t c_at_pos = s_[pos_];
                 const int8_t nv = lutptr[c_at_pos];
                 ++pos_;
                 if(nv == int8_t(-1)) {min = ENCODE_OVERFLOW; goto loop_start;}
@@ -297,7 +297,7 @@ public:
         min = filled = 0;
         while(likely(pos_ < l_)) {
             while(filled < sp_.k_ && likely(pos_ < l_)) {
-                const int8_t nv = lutptr[s_[pos_++]];
+                const int8_t nv = lutptr[uint8_t(s_[pos_++])];
                 if(unlikely(nv == int8_t(-1))) goto windowed_loop_start;
                 min = app.append(min, nv);
                 ++filled;
@@ -326,7 +326,7 @@ public:
         filled = min = 0;
         while(likely(pos_ < l_)) {
             while(filled < sp_.k_ && likely(pos_ < l_)) {
-                const auto nc = lutptr[s_[pos_++]];
+                const auto nc = lutptr[uint8_t(s_[pos_++])];
                 if(nc == int8_t(-1)) {min = ENCODE_OVERFLOW; goto windowed_loop_start;}
                 min = app.append(min, nc);
                 ent.push(nc);
@@ -366,11 +366,11 @@ public:
 
         start:
         p = s_ + i;
-        while(*p && cstr_lut[*p] < 0) ++p;
+        while(*p && cstr_lut[uint8_t(*p)] < 0) ++p;
         for(;;) {
             p2 = p;
             if(*p2 == 0) return;
-            while(*p2 && cstr_lut[*p2] >= 0 and p2 - p < k) ++p2;
+            while(*p2 && cstr_lut[uint8_t(*p2)] >= 0 and p2 - p < k) ++p2;
             if(*p2 == 0) return;
             if(p2 - p == k) break;
             p = p2 + 1;
@@ -380,7 +380,7 @@ public:
         func(canonicalize_ ? hv: fhv);
         for(; i < l_ - k; ++i) {
             auto newc = s_[i + k];
-            if(cstr_lut[newc] < 0) {
+            if(cstr_lut[uint8_t(newc)] < 0) {
                 i += k;
                 fhv = rhv = 0;
                 goto start;
@@ -544,7 +544,7 @@ public:
     INLINE KmerT kmer(unsigned start) {
         assert(start <= l_ - sp_.c_ + 1);
         if(l_ < sp_.c_)    return ENCODE_OVERFLOW;
-        KmerT new_kmer(lutptr[s_[start]]);
+        KmerT new_kmer(lutptr[uint8_t(s_[start])]);
         if(new_kmer == ENCODE_OVERFLOW) return ENCODE_OVERFLOW;
         u64 len(sp_.s_.size());
         int8_t nextc;
@@ -562,7 +562,7 @@ public:
             /*std::fprintf(stderr, "Shift %d\n", shift);*/
 #define ITER do {\
             start += *spaces++;\
-            if((nextc = lutptr[s_[start]]) == int8_t(-1)) {\
+            if((nextc = lutptr[uint8_t(s_[start])]) == int8_t(-1)) {\
                 new_kmer = ENCODE_OVERFLOW;\
                 goto rnk;\
             }\
@@ -574,7 +574,7 @@ public:
         } else if(rht == PROTEIN20 || rht == PROTEIN_14 || rht == PROTEIN_6) {
             const size_t mul = rht == PROTEIN20 ? 20: rht == PROTEIN_14 ? 14: 6;
 #define ITER do {start += *spaces++;\
-            if((nextc = lutptr[s_[start]]) == int8_t(-1)) {\
+            if((nextc = lutptr[uint8_t(s_[start])]) == int8_t(-1)) {\
                 new_kmer = ENCODE_OVERFLOW;\
                 goto rnk;\
             }\
@@ -716,7 +716,7 @@ public:
                 func(nextv);
             };
             for(i = nf = 0; nf < k_ && i < l; ++i) {
-                if((v1 = cstr_lut[s[i]]) == uint8_t(-1)) {
+                if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1)) {
                     fixup_minimizer:
                     if(i + 2 * k_ >= l) goto end;
                     i += k_;
@@ -729,14 +729,14 @@ public:
             }
             if(nf < k_) goto end; // All failed
             // Seed the reverse-strand hasher with the reverse complement of s[i - k_, i).
-            for(size_t j = i; j-- > i - k_;) rchasher_.eat(cstr_rc_lut[s[j]]);
+            for(size_t j = i; j-- > i - k_;) rchasher_.eat(cstr_rc_lut[uint8_t(s[j])]);
             add_hashes(hasher_);
             add_hashes(rchasher_);
             for(;i < l; ++i) {
-                if((v1 = cstr_lut[s[i]]) == uint8_t(-1))
+                if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1))
                     goto fixup_minimizer;
-                hasher_.update(cstr_lut[s[i - k_]], v1);
-                rchasher_.reverse_update(cstr_rc_lut[s[i]], cstr_rc_lut[s[i - k_]]);
+                hasher_.update(cstr_lut[uint8_t(s[i - k_])], v1);
+                rchasher_.reverse_update(cstr_rc_lut[uint8_t(s[i])], cstr_rc_lut[uint8_t(s[i - k_])]);
                 add_hashes(hasher_);
                 add_hashes(rchasher_);
             }
@@ -745,7 +745,7 @@ public:
                 func(max_in_queue().el_);
         } else {
             for(i = nf = 0; nf < k_ && i < l; ++i) {
-                if((v1 = cstr_lut[s[i]]) == uint8_t(-1)) {
+                if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1)) {
                     fixup:
                     if(i + 2 * k_ >= l) return;
                     i += k_;
@@ -758,13 +758,13 @@ public:
             }
             if(nf < k_) return; // All failed
             // Seed the reverse-strand hasher with the reverse complement of s[i - k_, i).
-            for(size_t j = i; j-- > i - k_;) rchasher_.eat(cstr_rc_lut[s[j]]);
+            for(size_t j = i; j-- > i - k_;) rchasher_.eat(cstr_rc_lut[uint8_t(s[j])]);
             func(std::min(hasher_.hashvalue, rchasher_.hashvalue));
             for(;i < l; ++i) {
-                if((v1 = cstr_lut[s[i]]) == uint8_t(-1))
+                if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1))
                     goto fixup;
-                hasher_.update(cstr_lut[s[i - k_]], v1);
-                rchasher_.reverse_update(cstr_rc_lut[s[i]], cstr_rc_lut[s[i - k_]]);
+                hasher_.update(cstr_lut[uint8_t(s[i - k_])], v1);
+                rchasher_.reverse_update(cstr_rc_lut[uint8_t(s[i])], cstr_rc_lut[uint8_t(s[i - k_])]);
                 func(std::min(hasher_.hashvalue, rchasher_.hashvalue));
             }
         }
@@ -787,7 +787,7 @@ public:
             } else if(v != ENCODE_OVERFLOW) func(v);
         };
         for(i = nf = 0; nf < k_ && i < l; ++i) {
-            if(unlikely((v1 = lutptr[s[i]]) == int8_t(-1))) {
+            if(unlikely((v1 = lutptr[uint8_t(s[i])]) == int8_t(-1))) {
                 //std::fprintf(stderr, "Char %c/%d was missing... %d\n", s[i], s[i], lutptr[s[i]]);
                 fixup:
                 i += k_; nf = 0; hasher_.reset();
@@ -796,9 +796,9 @@ public:
         if(nf < k_) return; // All failed
         use_val(hasher_.hashvalue);
         for(;i < l; ++i) {
-            if(lutptr[s[i]] == int8_t(-1)) goto fixup;
+            if(lutptr[uint8_t(s[i])] == int8_t(-1)) goto fixup;
             //auto ov = hasher_.hashvalue;
-            hasher_.update(lutptr[s[i - k_]], lutptr[s[i]]);
+            hasher_.update(lutptr[uint8_t(s[i - k_])], lutptr[uint8_t(s[i])]);
             //std::fprintf(stderr, "Updating with new char %c, which is translated to %d, which will replcae old %zu with %zu\n", s[i], int(lutptr[s[i]]), size_t(ov), size_t(hasher_.hashvalue));
             use_val(hasher_.hashvalue);
         }
@@ -895,7 +895,7 @@ struct RollingHasherSet {
         long long int nf = 0;
         uint8_t v1;
         for(; nf < mink && i < l; ++i) {
-            if((v1 = cstr_lut[s[i]]) == uint8_t(-1)) {
+            if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1)) {
                 fixup:
                 if(i + 2 * mink >= l) return;
                 i += mink;
@@ -904,7 +904,7 @@ struct RollingHasherSet {
             } // Fixme: this ignores both strands when one becomes 'N'-contaminated.
               // In the future, encode the side that is still valid
             else {
-                for(auto &h: hashers_) h.hasher_.eat(v1), h.rchasher_.eat(cstr_rc_lut[s[h.k_ - i - 1]]);
+                for(auto &h: hashers_) h.hasher_.eat(v1), h.rchasher_.eat(cstr_rc_lut[uint8_t(s[h.k_ - i - 1])]);
                 ++nf;
             }
         }
@@ -914,18 +914,18 @@ struct RollingHasherSet {
                 func(std::min(h.hasher_.hashvalue, h.rchasher_.hashvalue), hi);
         }
         for(;i < l; ++i) {
-            if((v1 = cstr_lut[s[i]]) == uint8_t(-1))
+            if((v1 = cstr_lut[uint8_t(s[i])]) == uint8_t(-1))
                 goto fixup;
             for(size_t hi = 0; hi < hashers_.size(); ++hi) {
                 auto &h(hashers_[hi]);
                 //h.rchasher_.eat(cstr_rc_lut[s[i - nf + h.k_ - 1]]);
                 if(nf >= h.k_) {
-                    h.rchasher_.reverse_update(cstr_rc_lut[s[i]], cstr_rc_lut[s[i - h.k_]]);
-                    h.hasher_.update(cstr_lut[s[i - h.k_]], v1);
+                    h.rchasher_.reverse_update(cstr_rc_lut[uint8_t(s[i])], cstr_rc_lut[uint8_t(s[i - h.k_])]);
+                    h.hasher_.update(cstr_lut[uint8_t(s[i - h.k_])], v1);
                     func(std::min(h.hasher_.hashvalue, h.rchasher_.hashvalue), hi);
                 } else {
                     h.hasher_.eat(v1);
-                    h.rchasher_.eat(cstr_rc_lut[s[i + h.k_ - nf - 1]]);
+                    h.rchasher_.eat(cstr_rc_lut[uint8_t(s[i + h.k_ - nf - 1])]);
                 }
             }
             ++nf;
