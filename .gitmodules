@@ -1,6 +1,6 @@
 [submodule "hll"]
 	path = hll
-	url = https://github.com/dnbaker/sketch
+	url = https://github.com/BenLangmead/sketch
 [submodule "zlib"]
 	path = zlib
 	url = https://github.com/madler/zlib
